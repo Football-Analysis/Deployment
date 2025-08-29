@@ -1,0 +1,61 @@
+services:
+  mongo:
+    image: ghcr.io/tristrmistr/mongo:7.0.17
+    ports:
+      - '27017:27017'
+    volumes:
+      - "mongo-vol:/data/db"
+    networks:
+      football-betting:
+        aliases:
+          - mongo
+
+  betting-bot:
+    image: ghcr.io/tristrmistr/betting-bot:0.3
+    environment:
+      MONGO_HOST: mongo
+      BETFAIR_USERNAME: tristrmistr@gmail.com
+      BETFAIR_PASSWORD: Mushr00m!
+      BETFAIR_API_KEY: jJhNYx5re8nmtro3
+      BETFAIR_CERT_DIR: /betting-bot/betfair-cert 
+    volumes:
+      - "/home/ubuntu/betfair-cert:/betting-bot/betfair-cert"
+      - "./config/betting-bot/config.py:/betting-bot/src/config.py"
+    networks:
+      football-betting:
+        aliases:
+          - betting-bot
+    
+  data-ingestor:
+    image: ghcr.io/tristrmistr/data-ingestor:0.6
+    environment:
+      MONGO_HOST: mongo
+      ODDS_API_KEY: 8de798c73eee3a377ad2dcb9b539748f
+      FOOTABLL_API_KEY: 76a319f5d4c68ca111d55bf3adc8b03b
+      BETFAIR_USERNAME: tristrmistr@gmail.com
+      BETFAIR_PASSWORD: Mushr00m!
+      BETFAIR_API_KEY: jJhNYx5re8nmtro3
+      BETFAIR_CERT_DIR: /data-ingestor/betfair-cert
+    volumes:
+       - "/home/ubuntu/betfair-cert:/data-ingestor/betfair-cert"
+       - "./config/data-ingestor/config.py:/data-ingestor/src/config.py"
+    networks:
+      football-betting:
+        aliases:
+          - data-ingestor
+
+  football-predictor:
+    image: ghcr.io/tristrmistr/football-predictor:0.1
+    environment:
+      MONGO_HOST: mongo
+    networks:
+      football-betting:
+        aliases:
+          - football-predictor
+
+volumes:
+  mongo-vol:
+
+networks:
+  football-betting:
+    external: true
