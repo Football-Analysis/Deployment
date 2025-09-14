@@ -1,0 +1,86 @@
+services:
+  mongo:
+    image: ghcr.io/tristrmistr/mongo:7.0.17
+    ports:
+      - '27017:27017'
+    volumes:
+      - "mongo-vol:/data/db"
+    networks:
+      post-and-in:
+        aliases:
+          - mongo
+
+  betting-bot:
+    image: ghcr.io/tristrmistr/betting-bot:1.1.0
+    environment:
+      EMAIL_USERNAME: postandin.notifications@gmail.com
+      MONGO_HOST: mongo
+      BETFAIR_CERT_DIR: /betting-bot/betfair-cert
+      LOGGING_LEVEL: INFO 
+    volumes:
+      - "/home/ubuntu/betfair-cert:/betting-bot/betfair-cert"
+      - "./config/betting-bot/config.py:/betting-bot/src/config.py"
+    secrets:
+      - email_password
+      - betfair_username
+      - betfair_password
+      - betfair_api_key
+    networks:
+      post-and-in:
+        aliases:
+          - betting-bot
+    
+  data-ingestor:
+    image: ghcr.io/tristrmistr/data-ingestor:1.0.0
+    environment:
+      MONGO_HOST: mongo
+      BETFAIR_CERT_DIR: /data-ingestor/betfair-cert
+    volumes:
+       - "/home/ubuntu/betfair-cert:/data-ingestor/betfair-cert"
+       - "./config/data-ingestor/config.py:/data-ingestor/src/config.py"
+    secrets:
+      - odds_api_key
+      - betfair_username
+      - betfair_password
+      - betfair_api_key
+      - football_api_key
+    networks:
+      post-and-in:
+        aliases:
+          - data-ingestor
+
+  football-predictor:
+    image: ghcr.io/tristrmistr/football-predictor:0.1
+    environment:
+      MONGO_HOST: mongo
+      MODEL: mvp
+    volumes:
+      - "/home/ubuntu/deployment/config/football-predictor/mvp.pkl:/football-predictor/ml-models/mvp.pkl"
+    networks:
+      post-and-in:
+        aliases:
+          - football-predictor
+
+volumes:
+  mongo-vol:
+
+networks:
+  post-and-in:
+    external: true
+
+secrets:
+  email_password:
+    external: true
+  betfair_username:
+    external: true
+  betfair_password:
+    external: true
+  betfair_api_key:
+    external: true
+  odds_api_key:
+    external: true
+  football_api_key:
+    external: true
+
+
+
